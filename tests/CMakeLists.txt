@@ -4,7 +4,8 @@ macro(add_epub_test name)
 endmacro(add_epub_test)
 
 add_epub_test(basic)
-add_epub_test(metadata)
 add_epub_test(contents)
+add_epub_test(metadata)
+add_epub_test(toc)
 add_epub_test(version)
 

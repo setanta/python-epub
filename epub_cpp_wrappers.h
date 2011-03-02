@@ -12,18 +12,21 @@ public:
         LINEAR = EITERATOR_LINEAR,
         NONLINEAR = EITERATOR_NONLINEAR
     };
-
-    ~EIterator() {
-        if (m_iter)
-            epub_free_iterator(m_iter);
+    ~EIterator() { epub_free_iterator(m_iter); }
+    inline bool next() {
+        if (m_isFirst) {
+            m_isFirst = false;
+            return true;
+        }
+        return epub_it_get_next(m_iter);
     }
-    inline char* next() { return epub_it_get_next(m_iter); }
     inline char* curr() { return epub_it_get_curr(m_iter); }
     inline char* curr_url() { return epub_it_get_curr_url(m_iter); }
 private:
     friend class EPub;
-    explicit EIterator(struct eiterator* iter) : m_iter(iter) {}
+    explicit EIterator(struct eiterator* iter) : m_iter(iter), m_isFirst(true) {}
     struct eiterator* m_iter;
+    bool m_isFirst;
 };
 
 class TIterator {
@@ -33,20 +36,23 @@ public:
         GUIDE = TITERATOR_GUIDE,
         PAGES = TITERATOR_PAGES
     };
-
-    ~TIterator() {
-        if (m_iter)
-            epub_free_titerator(m_iter);
-    }
+    ~TIterator() { epub_free_titerator(m_iter); }
     inline bool isValid() { return epub_tit_curr_valid(m_iter); }
     inline int depth() { return epub_tit_get_curr_depth(m_iter); }
     inline char* link() { return epub_tit_get_curr_link(m_iter); }
     inline char* label() { return epub_tit_get_curr_label(m_iter); }
-    inline bool next() { return epub_tit_next(m_iter); }
+    inline bool next() {
+        if (m_isFirst) {
+            m_isFirst = false;
+            return true;
+        }
+        return epub_tit_next(m_iter);
+    }
 private:
     friend class EPub;
-    explicit TIterator(struct titerator* iter) : m_iter(iter) {}
+    explicit TIterator(struct titerator* iter) : m_iter(iter), m_isFirst(true) {}
     struct titerator* m_iter;
+    bool m_isFirst;
 };
 
 class EPub {

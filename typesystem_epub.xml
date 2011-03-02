@@ -85,13 +85,21 @@
         }
     </template>
 
+    <template name='iterator.__iter__'>
+        Py_INCREF(%PYSELF);
+        %PYARG_0 = %PYSELF;
+    </template>
+    <template name='iterator.__next__'>
+        if (%CPPSELF.next()) {
+            <insert-template name='iterator.__iter__' />
+        } else {
+            PyErr_SetNone(PyExc_StopIteration);
+        }
+    </template>
+
     <object-type name='EIterator'>
         <enum-type name='type' />
-        <modify-function signature='next()'>
-            <inject-code class='target' position='beginning'>
-                <insert-template name='return_char_pointer' />
-            </inject-code>
-        </modify-function>
+        <modify-function signature='next()' remove='all' />
         <modify-function signature='curr()'>
             <inject-code class='target' position='beginning'>
                 <insert-template name='return_char_pointer' />
@@ -102,6 +110,16 @@
                 <insert-template name='return_char_pointer' />
             </inject-code>
         </modify-function>
+        <add-function signature='__iter__' return-type='PyObject*'>
+            <inject-code class='target' position='beginning'>
+                <insert-template name='iterator.__iter__' />
+            </inject-code>
+        </add-function>
+        <add-function signature='__next__' return-type='PyObject*'>
+            <inject-code class='target' position='beginning'>
+                <insert-template name='iterator.__next__' />
+            </inject-code>
+        </add-function>
     </object-type>
 
     <object-type name='TIterator'>
@@ -116,6 +134,17 @@
                 <insert-template name='return_char_pointer' />
             </inject-code>
         </modify-function>
+        <modify-function signature='next()' remove='all' />
+        <add-function signature='__iter__' return-type='PyObject*'>
+            <inject-code class='target' position='beginning'>
+                <insert-template name='iterator.__iter__' />
+            </inject-code>
+        </add-function>
+        <add-function signature='__next__' return-type='PyObject*'>
+            <inject-code class='target' position='beginning'>
+                <insert-template name='iterator.__next__' />
+            </inject-code>
+        </add-function>
     </object-type>
 
     <function signature='epub_cleanup()' rename='cleanup' />
