@@ -42,6 +42,19 @@
                                            LIBEPUB_VERSION_RELEASE));
     </inject-code>
 
+    <template name='conversion_rule_for_data_argument'>
+        char* data;
+        char** %out = &amp;data;
+    </template>
+    <template name='conversion_rule_for_data_result'>
+        if (%0 &lt; 0) {
+            Py_INCREF(Py_None);
+            %PYARG_0 = Py_None;
+        } else {
+            %PYARG_0 = PyString_FromStringAndSize(data, %0);
+        }
+    </template>
+
     <object-type name='EPub'>
         <enum-type name='metadata' />
         <modify-function signature='get_metadata(EPub::metadata,int*)'>
@@ -72,6 +85,34 @@
                     %PYARG_0 = Py_None;
                 }
             </inject-code>
+        </modify-function>
+        <modify-function signature='get_data(const char*,char**)'>
+            <modify-argument index='2'>
+                <remove-argument />
+                <conversion-rule class="native">
+                    <insert-template name='conversion_rule_for_data_argument' />
+                </conversion-rule>
+            </modify-argument>
+            <inject-code class='target' position='end'>
+                <insert-template name='conversion_rule_for_data_result' />
+            </inject-code>
+            <modify-argument index='return'>
+                <replace-type modified-type='PyTuple' />
+            </modify-argument>
+        </modify-function>
+        <modify-function signature='get_ocf_file(const char*,char**)'>
+            <modify-argument index='2'>
+                <remove-argument />
+                <conversion-rule class="native">
+                    <insert-template name='conversion_rule_for_data_argument' />
+                </conversion-rule>
+            </modify-argument>
+            <inject-code class='target' position='end'>
+                <insert-template name='conversion_rule_for_data_result' />
+            </inject-code>
+            <modify-argument index='return'>
+                <replace-type modified-type='PyTuple' />
+            </modify-argument>
         </modify-function>
     </object-type>
 
