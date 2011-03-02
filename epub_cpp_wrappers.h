@@ -71,7 +71,10 @@ public:
     };
 
     static inline EPub* open(const char* filename, int debug = 0) {
-        return new EPub(epub_open(filename, debug));
+        struct epub* book = epub_open(filename, debug);
+        if (book)
+            return new EPub(book);
+        return 0;
     }
     inline void set_debug(int debug) { epub_set_debug(m_epub, debug); }
     inline int get_ocf_file(const char* filename, char** data) {
@@ -84,10 +87,16 @@ public:
     }
     inline int get_data(const char* name, char** data) { return epub_get_data(m_epub, name, data); }
     inline EIterator* get_iterator(EIterator::type type, int opt = 0) {
-        return new EIterator(epub_get_iterator(m_epub, eiterator_type(type), opt));
+        struct eiterator* it = epub_get_iterator(m_epub, eiterator_type(type), opt);
+        if (it)
+            return new EIterator(it);
+        return 0;
     }
     inline TIterator* get_titerator(TIterator::type type, int opt = 0) {
-        return new TIterator(epub_get_titerator(m_epub, titerator_type(type), opt));
+        struct titerator* it = epub_get_titerator(m_epub, titerator_type(type), opt);
+        if (it)
+            return new TIterator(it);
+        return 0;
     }
 private:
     explicit EPub(struct epub* ptr) : m_epub(ptr) {}
