@@ -1,0 +1,125 @@
+<?xml version="1.0"?>
+<typesystem package="epub">
+    <primitive-type name='int' />
+    <primitive-type name='bool' />
+    <primitive-type name='char' />
+    <primitive-type name='unsigned char' />
+
+    <enum-type name='epub_metadata' />
+    <enum-type name='eiterator_type' />
+    <enum-type name='titerator_type' />
+
+    <!--
+    It should be possible to add extra includes to the module.
+    (I suspect that it is already...)
+    -->
+    <inject-code class='native' position='beginning'>
+    #include &lt;epub_version.h&gt;
+    </inject-code>
+
+    <!--
+    Where's the directives to add fields to the module?
+    Something like:
+    <add-field name='__version__' type='str' value='LIBEPUB_VERSION_STRING' />
+    or
+    <add-field name='__version_info__' type='object'>
+        <value-expression>
+        Shiboken::makeTuple(LIBEPUB_VERSION_MAJOR, LIBEPUB_VERSION_MINOR, LIBEPUB_VERSION_RELEASE)
+        </value-expression>
+    </add-field>
+    or
+    <add-field name='__version__' type='str' />LIBEPUB_VERSION_STRING</add-field>
+    (The last I liked best.)
+    -->
+    <inject-code class='target' position='end'>
+    PyModule_AddStringConstant(module, "__version__", LIBEPUB_VERSION_STRING);
+    PyModule_AddObject(module, "__version_info__",
+                       Shiboken::makeTuple(LIBEPUB_VERSION_MAJOR,
+                                           LIBEPUB_VERSION_MINOR,
+                                           LIBEPUB_VERSION_RELEASE));
+    </inject-code>
+
+    <value-type name='eiterator' generate='no' />
+    <value-type name='titerator' generate='no' />
+
+    <object-type name='EPub'>
+        <modify-function signature='get_metadata(enum epub_metadata,int*)'>
+            <modify-argument index='2'>
+                <remove-argument />
+            </modify-argument>
+            <modify-argument index='return'>
+                <replace-type modified-type='PyTuple' />
+            </modify-argument>
+            <inject-code class='target'>
+                unsigned char** data = 0;
+                int size;
+                data = %CPPSELF.%FUNCTION_NAME(%1, &amp;size);
+                if (data) {
+                    %PYARG_0 = PyTuple_New(size);
+                    PyObject* uni = 0;
+                    for (int i = 0; i &lt; size; ++i) {
+                        uni = PyUnicode_DecodeUTF8((const char*)data[i],
+                                                   strlen((const char*)data[i]),
+                                                   "strict");
+                        PyTuple_SetItem(%PYARG_0, i, uni);
+                    }
+                    for (int i = 0; i &lt; size; ++i)
+                        free(data[i]);
+                    free(data);
+                } else {
+                    Py_INCREF(Py_None);
+                    %PYARG_0 = Py_None;
+                }
+            </inject-code>
+        </modify-function>
+    </object-type>
+
+    <template name='return_char_pointer'>
+        char* %0 = %CPPSELF.%FUNCTION_NAME();
+        if (%0) {
+            /*
+            SbkDbg() &lt;&lt; "size:" &lt;&lt; strlen(%0);
+            SbkDbg() &lt;&lt; "line:" &lt;&lt; %0;
+            SbkDbg() &lt;&lt; "char at 1418:" &lt;&lt; %0[1418];
+            */
+            %PYARG_0 = PyUnicode_DecodeUTF8(%0, strlen(%0), "strict");
+        } else {
+            %PYARG_0 = Py_None;
+            Py_INCREF(Py_None);
+        }
+    </template>
+
+    <object-type name='EIterator'>
+        <modify-function signature='next()'>
+            <inject-code class='target' position='beginning'>
+                <insert-template name='return_char_pointer' />
+            </inject-code>
+        </modify-function>
+        <modify-function signature='curr()'>
+            <inject-code class='target' position='beginning'>
+                <insert-template name='return_char_pointer' />
+            </inject-code>
+        </modify-function>
+        <modify-function signature='curr_url()'>
+            <inject-code class='target' position='beginning'>
+                <insert-template name='return_char_pointer' />
+            </inject-code>
+        </modify-function>
+    </object-type>
+
+    <object-type name='TIterator'>
+        <modify-function signature='link()'>
+            <inject-code class='target' position='beginning'>
+                <insert-template name='return_char_pointer' />
+            </inject-code>
+        </modify-function>
+        <modify-function signature='label()'>
+            <inject-code class='target' position='beginning'>
+                <insert-template name='return_char_pointer' />
+            </inject-code>
+        </modify-function>
+    </object-type>
+
+    <function signature='epub_cleanup()' rename='cleanup' />
+</typesystem>
+

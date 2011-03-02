@@ -1,0 +1,74 @@
+The type system should be expressive enough to allow the creation of
+class based bindings from C libraries that roughly simulate object
+orientation.
+
+I want to create a Python class "epub" from the C struct epub, the Python methods
+should be automatically from the following C functions:
+
+    void epub_set_debug(struct epub *epub, int debug);
+    int epub_get_ocf_file(struct epub *epub, const char *filename, char **data);
+    int epub_close(struct epub *epub);
+    void epub_dump(struct epub *epub);
+    unsigned char **epub_get_metadata(struct epub *epub, enum epub_metadata type, ...)
+    int epub_get_data(struct epub *epub, const char *name, char **data);
+    struct eiterator *epub_get_iterator(struct epub *epub, ...);
+    struct titerator *epub_get_titerator(struct epub *epub, ...);
+
+Some points to identify and alter methods:
+
+1. The first parameter is a pointer to the object struct.
+   This is the main identification point. There must be a way to exclude
+   some functions from being erroneously added, even though they look like
+   a potential method.
+   Example: "FUNC(struct epub*, ...)"
+2. The user must supply a function prefix to be removed when converted to
+   method-hood.
+   Example: "epub_" will turn "epub_close(struct epub *epub)" into "epub.close()"
+3. The constructor method must be identified, and in its absence a factory may be used.
+   Example: "struct epub* epub_open(const char *filename, int debug);" identified
+   as the factory method will generate the static method "epub.open(str filename, int debug)".
+4. The destructor/deallocator must be identified as well.
+   Example: "epub_free_iterator" for eiterator class.
+
+Example - eiterator
+- Object: struct eiterator*
+- Constructor: No
+- Destructor: void epub_free_iterator(struct eiterator *it);
+- Prefix: epub_it_get_ (let's get rid of the "_get_" part)
+  char *epub_it_get_next(struct eiterator *it);
+  char *epub_it_get_curr(struct eiterator *it);
+  char *epub_it_get_curr_url(struct eiterator *it);
+
+Example - titerator
+- Object: struct titerator*
+- Constructor: No
+- Destructor: void epub_free_titerator(struct titerator *tit);
+- Prefix: epub_tit_ (can't get rid of "_get_" as in eiterator)
+  int epub_tit_curr_valid(struct titerator *tit);
+  int epub_tit_get_curr_depth(struct titerator *tit);
+  char *epub_tit_get_curr_link(struct titerator *tit);
+  char *epub_tit_get_curr_label(struct titerator *tit);
+  int epub_tit_next(struct titerator *tit);
+
+Example - global function
+- Remove the "epub_" prefix from "void epub_cleanup();" and we have "epub.cleanup()"
+
+
+Another good feature for binding C code, which has no namespaces, would be to be able to
+say that an enum should be inside an arbitrary object.
+
+Example 1:
+    enum epub_metadata {
+          EPUB_ID, /**< ebook id*/
+          EPUB_TITLE, /**< ebook title*/
+          ...
+    };
+
+    "epub_metadata" should be moved inside the "epub" Python class, and have its "epub_"
+    prefix removed to be seen as "epub.metadata". Removing enum values prefixes in batch
+    would be equally useful, e.g. remove "EPUB_", so the complete modification would result
+    in: "epub.ID", "epub.TITLE".
+
+
+
+
