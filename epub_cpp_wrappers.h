@@ -7,6 +7,12 @@ class EPub;
 
 class EIterator {
 public:
+    enum type {
+        SPINE = EITERATOR_SPINE,
+        LINEAR = EITERATOR_LINEAR,
+        NONLINEAR = EITERATOR_NONLINEAR
+    };
+
     ~EIterator() {
         if (m_iter)
             epub_free_iterator(m_iter);
@@ -22,6 +28,12 @@ private:
 
 class TIterator {
 public:
+    enum type {
+        NAVMAP = TITERATOR_NAVMAP,
+        GUIDE = TITERATOR_GUIDE,
+        PAGES = TITERATOR_PAGES
+    };
+
     ~TIterator() {
         if (m_iter)
             epub_free_titerator(m_iter);
@@ -39,6 +51,25 @@ private:
 
 class EPub {
 public:
+    enum metadata {
+        ID = EPUB_ID,
+        TITLE = EPUB_TITLE,
+        CREATOR = EPUB_CREATOR,
+        CONTRIB = EPUB_CONTRIB,
+        SUBJECT = EPUB_SUBJECT,
+        PUBLISHER = EPUB_PUBLISHER,
+        DESCRIPTION = EPUB_DESCRIPTION,
+        DATE = EPUB_DATE,
+        TYPE = EPUB_TYPE,
+        FORMAT = EPUB_FORMAT,
+        SOURCE = EPUB_SOURCE,
+        LANG = EPUB_LANG,
+        RELATION = EPUB_RELATION,
+        COVERAGE = EPUB_COVERAGE,
+        RIGHTS = EPUB_RIGHTS,
+        META = EPUB_META
+    };
+
     static inline EPub* open(const char* filename, int debug = 0) {
         return new EPub(epub_open(filename, debug));
     }
@@ -48,15 +79,15 @@ public:
     }
     inline bool close() { return epub_close(m_epub); }
     inline void dump() { epub_dump(m_epub); }
-    inline unsigned char** get_metadata(enum epub_metadata type, int* size) {
-        return epub_get_metadata(m_epub, type, size);
+    inline unsigned char** get_metadata(metadata type, int* size) {
+        return epub_get_metadata(m_epub, epub_metadata(type), size);
     }
     inline int get_data(const char* name, char** data) { return epub_get_data(m_epub, name, data); }
-    inline EIterator* get_iterator(enum eiterator_type type, int opt = 0) {
-        return new EIterator(epub_get_iterator(m_epub, type, opt));
+    inline EIterator* get_iterator(EIterator::type type, int opt = 0) {
+        return new EIterator(epub_get_iterator(m_epub, eiterator_type(type), opt));
     }
-    inline TIterator* get_titerator(enum titerator_type type, int opt = 0) {
-        return new TIterator(epub_get_titerator(m_epub, type, opt));
+    inline TIterator* get_titerator(TIterator::type type, int opt = 0) {
+        return new TIterator(epub_get_titerator(m_epub, titerator_type(type), opt));
     }
 private:
     explicit EPub(struct epub* ptr) : m_epub(ptr) {}

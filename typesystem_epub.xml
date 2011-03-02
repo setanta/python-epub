@@ -1,13 +1,16 @@
-<?xml version="1.0"?>
-<typesystem package="epub">
+<?xml version='1.0'?>
+<typesystem package='epub'>
     <primitive-type name='int' />
     <primitive-type name='bool' />
     <primitive-type name='char' />
     <primitive-type name='unsigned char' />
 
-    <enum-type name='epub_metadata' />
-    <enum-type name='eiterator_type' />
-    <enum-type name='titerator_type' />
+    <value-type name='eiterator' generate='no' />
+    <value-type name='titerator' generate='no' />
+
+    <rejection class='*' enum-name='eiterator_type' />
+    <rejection class='*' enum-name='titerator_type' />
+    <rejection class='*' enum-name='epub_metadata' />
 
     <!--
     It should be possible to add extra includes to the module.
@@ -39,11 +42,9 @@
                                            LIBEPUB_VERSION_RELEASE));
     </inject-code>
 
-    <value-type name='eiterator' generate='no' />
-    <value-type name='titerator' generate='no' />
-
     <object-type name='EPub'>
-        <modify-function signature='get_metadata(enum epub_metadata,int*)'>
+        <enum-type name='metadata' />
+        <modify-function signature='get_metadata(EPub::metadata,int*)'>
             <modify-argument index='2'>
                 <remove-argument />
             </modify-argument>
@@ -77,19 +78,15 @@
     <template name='return_char_pointer'>
         char* %0 = %CPPSELF.%FUNCTION_NAME();
         if (%0) {
-            /*
-            SbkDbg() &lt;&lt; "size:" &lt;&lt; strlen(%0);
-            SbkDbg() &lt;&lt; "line:" &lt;&lt; %0;
-            SbkDbg() &lt;&lt; "char at 1418:" &lt;&lt; %0[1418];
-            */
             %PYARG_0 = PyUnicode_DecodeUTF8(%0, strlen(%0), "strict");
         } else {
-            %PYARG_0 = Py_None;
             Py_INCREF(Py_None);
+            %PYARG_0 = Py_None;
         }
     </template>
 
     <object-type name='EIterator'>
+        <enum-type name='type' />
         <modify-function signature='next()'>
             <inject-code class='target' position='beginning'>
                 <insert-template name='return_char_pointer' />
@@ -108,6 +105,7 @@
     </object-type>
 
     <object-type name='TIterator'>
+        <enum-type name='type' />
         <modify-function signature='link()'>
             <inject-code class='target' position='beginning'>
                 <insert-template name='return_char_pointer' />

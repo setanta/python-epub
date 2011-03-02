@@ -17,9 +17,9 @@ class ReadContentsTest(unittest.TestCase):
 
     def testReadToc(self):
         book = epub.EPub.open(self.epub_file)
-        it = book.get_titerator(epub.TITERATOR_NAVMAP)
+        it = book.get_titerator(epub.TIterator.NAVMAP)
         if not it:
-            it = book.get_titerator(epub.TITERATOR_GUIDE)
+            it = book.get_titerator(epub.TIterator.GUIDE)
 
         toc = {}
         if it:
@@ -38,7 +38,7 @@ class ReadContentsTest(unittest.TestCase):
 
     def testReadSpine(self):
         book = epub.EPub.open(self.epub_file)
-        it = book.get_iterator(epub.EITERATOR_SPINE)
+        it = book.get_iterator(epub.EIterator.SPINE)
 
         contents = {}
         if it:
