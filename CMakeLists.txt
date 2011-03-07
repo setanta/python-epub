@@ -41,3 +41,24 @@ add_custom_command(OUTPUT ${epub_SRC}
 enable_testing()
 add_subdirectory(tests)
 
+if (NOT SITE_PACKAGE)
+    execute_process(
+        COMMAND ${SHIBOKEN_PYTHON_INTERPRETER} -c "from distutils import sysconfig; \\
+            print sysconfig.get_python_lib(1,0,prefix='${CMAKE_INSTALL_PREFIX}')"
+        OUTPUT_VARIABLE SITE_PACKAGE
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+    if (NOT SITE_PACKAGE)
+        message(FATAL_ERROR "Could not detect Python module installation directory.")
+    elseif (APPLE)
+        message(STATUS "!!! The generated bindings will be installed on ${SITE_PACKAGE}, is it right!?")
+    endif()
+endif()
+
+# uninstall target
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake_uninstall.cmake
+               ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake
+               IMMEDIATE @ONLY)
+add_custom_target(uninstall ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/epub.so DESTINATION ${SITE_PACKAGE})
+
