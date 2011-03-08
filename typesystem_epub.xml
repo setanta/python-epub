@@ -5,6 +5,9 @@
     <primitive-type name='char' />
     <primitive-type name='unsigned char' />
 
+    <value-type name='eiterator' generate='no' />
+    <value-type name='titerator' generate='no' />
+
     <rejection class='*' enum-name='eiterator_type' />
     <rejection class='*' enum-name='titerator_type' />
     <rejection class='*' enum-name='epub_metadata' />
