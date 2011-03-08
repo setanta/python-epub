@@ -8,9 +8,9 @@
     <value-type name='eiterator' generate='no' />
     <value-type name='titerator' generate='no' />
 
-    <rejection class='*' enum-name='eiterator_type' />
-    <rejection class='*' enum-name='titerator_type' />
-    <rejection class='*' enum-name='epub_metadata' />
+    <rejection enum-name='eiterator_type' />
+    <rejection enum-name='titerator_type' />
+    <rejection enum-name='epub_metadata' />
 
     <!--
     It should be possible to add extra includes to the module.
