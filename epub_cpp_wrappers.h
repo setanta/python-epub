@@ -109,6 +109,8 @@ public:
     }
 private:
     explicit EPub(struct epub* ptr) : m_epub(ptr) {}
+    EPub(const EPub& other) {}
+    EPub& operator=(const EPub& other) {}
     struct epub* m_epub;
 };
 
