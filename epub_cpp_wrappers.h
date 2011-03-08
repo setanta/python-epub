@@ -8,9 +8,9 @@ class EPub;
 class EIterator {
 public:
     enum type {
-        SPINE = EITERATOR_SPINE,
-        LINEAR = EITERATOR_LINEAR,
-        NONLINEAR = EITERATOR_NONLINEAR
+        SPINE = int(EITERATOR_SPINE),
+        LINEAR = int(EITERATOR_LINEAR),
+        NONLINEAR = int(EITERATOR_NONLINEAR)
     };
     ~EIterator() { epub_free_iterator(m_iter); }
     inline bool next() {
@@ -32,9 +32,9 @@ private:
 class TIterator {
 public:
     enum type {
-        NAVMAP = TITERATOR_NAVMAP,
-        GUIDE = TITERATOR_GUIDE,
-        PAGES = TITERATOR_PAGES
+        NAVMAP = int(TITERATOR_NAVMAP),
+        GUIDE = int(TITERATOR_GUIDE),
+        PAGES = int(TITERATOR_PAGES)
     };
     ~TIterator() { epub_free_titerator(m_iter); }
     inline bool isValid() { return epub_tit_curr_valid(m_iter); }
@@ -58,22 +58,22 @@ private:
 class EPub {
 public:
     enum metadata {
-        ID = EPUB_ID,
-        TITLE = EPUB_TITLE,
-        CREATOR = EPUB_CREATOR,
-        CONTRIB = EPUB_CONTRIB,
-        SUBJECT = EPUB_SUBJECT,
-        PUBLISHER = EPUB_PUBLISHER,
-        DESCRIPTION = EPUB_DESCRIPTION,
-        DATE = EPUB_DATE,
-        TYPE = EPUB_TYPE,
-        FORMAT = EPUB_FORMAT,
-        SOURCE = EPUB_SOURCE,
-        LANG = EPUB_LANG,
-        RELATION = EPUB_RELATION,
-        COVERAGE = EPUB_COVERAGE,
-        RIGHTS = EPUB_RIGHTS,
-        META = EPUB_META
+        ID = int(EPUB_ID),
+        TITLE = int(EPUB_TITLE),
+        CREATOR = int(EPUB_CREATOR),
+        CONTRIB = int(EPUB_CONTRIB),
+        SUBJECT = int(EPUB_SUBJECT),
+        PUBLISHER = int(EPUB_PUBLISHER),
+        DESCRIPTION = int(EPUB_DESCRIPTION),
+        DATE = int(EPUB_DATE),
+        TYPE = int(EPUB_TYPE),
+        FORMAT = int(EPUB_FORMAT),
+        SOURCE = int(EPUB_SOURCE),
+        LANG = int(EPUB_LANG),
+        RELATION = int(EPUB_RELATION),
+        COVERAGE = int(EPUB_COVERAGE),
+        RIGHTS = int(EPUB_RIGHTS),
+        META = int(EPUB_META)
     };
 
     ~EPub() {
