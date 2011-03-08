@@ -12,7 +12,7 @@ class BasicTest(unittest.TestCase):
         self.assert_(items.issuperset(expected))
 
     def testEPubItems(self):
-        expected = set(['open', 'close', 'dump', 'get_data',
+        expected = set(['open', 'dump', 'get_data',
                         'get_iterator', 'get_titerator', 'get_metadata',
                         'get_ocf_file', 'metadata', 'set_debug'])
         items = set(dir(epub.EPub))

@@ -76,6 +76,10 @@ public:
         META = EPUB_META
     };
 
+    ~EPub() {
+        epub_close(m_epub);
+    }
+
     static inline EPub* open(const char* filename, int debug = 0) {
         struct epub* book = epub_open(filename, debug);
         if (book)
@@ -86,7 +90,6 @@ public:
     inline int get_ocf_file(const char* filename, char** data) {
         return epub_get_ocf_file(m_epub, filename, data);
     }
-    inline bool close() { return epub_close(m_epub); }
     inline void dump() { epub_dump(m_epub); }
     inline unsigned char** get_metadata(metadata type, int* size) {
         return epub_get_metadata(m_epub, epub_metadata(type), size);
