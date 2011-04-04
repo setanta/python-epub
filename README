@@ -1,3 +1,5 @@
+NOTE: This README is in fact a README for myself.
+
 The type system should be expressive enough to allow the creation of
 class based bindings from C libraries that roughly simulate object
 orientation.
