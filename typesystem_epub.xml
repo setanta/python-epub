@@ -12,13 +12,9 @@
     <rejection enum-name='titerator_type' />
     <rejection enum-name='epub_metadata' />
 
-    <!--
-    It should be possible to add extra includes to the module.
-    (I suspect that it is already...)
-    -->
-    <inject-code class='native' position='beginning'>
-    #include &lt;epub_version.h&gt;
-    </inject-code>
+    <extra-includes>
+        <include file-name="epub_version.h" location="global"/>
+    </extra-includes>
 
     <!--
     Where's the directives to add fields to the module?
