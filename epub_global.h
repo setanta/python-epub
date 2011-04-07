@@ -7,9 +7,5 @@
 
 #include "epub_cpp_wrappers.h"
 
-// ApiExtractor complains if it finds only pre-definitions.
-struct titerator {};
-struct eiterator {};
-
 #endif
 

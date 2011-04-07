@@ -185,5 +185,8 @@
     </object-type>
 
     <function signature='epub_cleanup()' rename='cleanup' />
+
+    <suppress-warning text="type 'titerator' is specified in typesystem, but not defined. This could potentially lead to compilation errors." />
+    <suppress-warning text="type 'eiterator' is specified in typesystem, but not defined. This could potentially lead to compilation errors." />
 </typesystem>
 
