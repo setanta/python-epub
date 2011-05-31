@@ -3,10 +3,12 @@
 
 import os
 import sys
+import zipfile
+import tempfile
 from epub import EPub, TIterator, EIterator
 from PySide.QtCore import QUrl
 from PySide.QtGui import QApplication, QVBoxLayout, QWidget, QToolBar, QFileDialog
-from PySide.QtWebKit import QWebView, QWebPage
+from PySide.QtWebKit import QWebView, QWebPage, QWebSettings
 
 
 class BookView(QWidget):
@@ -28,13 +30,36 @@ class BookView(QWidget):
         self.setLayout(layout)
 
     def loadPage(self, contents):
+        pageTempDir = tempfile.mkdtemp()
         self.view.setHtml(contents)
         page = self.view.page()
+
+        epubFile = zipfile.ZipFile(self.book.filepath, 'r')
+        epubFiles = epubFile.namelist()
+
+        for element in page.mainFrame().findAllElements('img'):
+            image = element.attribute('src')
+            if not image.startswith('/') or not images.startswith('file://'):
+                imageFile = None
+                if image in epubFiles:
+                    imageFile = image
+                elif os.path.join('OEBPS', image) in epubFiles:
+                    imageFile = os.path.join('OEBPS', image)
+                elif os.path.join('OPS', image) in epubFiles:
+                    imageFile = os.path.join('OPS', image)
+                else:
+                    continue
+                epubFile.extract(imageFile, pageTempDir)
+                element.setAttribute('src', 'file://%s/%s' % (pageTempDir, imageFile))
+
+        epubFile.close()
+
         page.setLinkDelegationPolicy(QWebPage.DelegateAllLinks)
         page.linkClicked[QUrl].connect(self.linkClicked)
 
     def loadBook(self, ebookfile):
         self.book = EPub.open(ebookfile)
+        setattr(self.book, 'filepath', ebookfile)
 
         self.loadToC()
 
@@ -84,6 +109,8 @@ class BookView(QWidget):
     def linkClicked(self, url):
         if url.path() in self.contents.keys():
             self.loadPage(self.contents[url.path()])
+        elif url.path().startswith('http://') or url.path().startswith('www.'):
+            print 'pass the address to the system browser'
 
     def openClicked(self):
         epubFile = QFileDialog.getOpenFileName(self, 'Open Image', '.', '*.epub')[0]
