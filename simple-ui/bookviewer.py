@@ -62,6 +62,17 @@ class BookView(QWidget):
         page.setLinkDelegationPolicy(QWebPage.DelegateAllLinks)
         page.linkClicked[QUrl].connect(self.linkClicked)
 
+    @staticmethod
+    def findCoverImageFile(epubFilePath):
+        epubFile = zipfile.ZipFile(epubFilePath, 'r')
+        possible_cover_files = ['cover.png', 'cover.jpg', 'cover.jpeg']
+        coverFile = None
+        for fileinfo in epubFile.filelist:
+            if os.path.basename(fileinfo.filename).lower() in possible_cover_files:
+                coverFile = fileinfo
+                break
+        return coverFile.filename if coverFile else None
+
     def loadBook(self, ebookfile):
         self.book = EPub.open(ebookfile)
         setattr(self.book, 'filepath', ebookfile)
@@ -83,38 +94,44 @@ class BookView(QWidget):
         else:
             # Load meta data
             title = self.book.get_metadata(EPub.TITLE)
-            creator = self.book.get_metadata(EPub.CREATOR)
-            subject = self.book.get_metadata(EPub.SUBJECT)
-            publisher = self.book.get_metadata(EPub.PUBLISHER)
-            date = self.book.get_metadata(EPub.DATE)
-            rights = self.book.get_metadata(EPub.RIGHTS)
-            if title:
-                contents = u'<h1 align="center">%s</h1>' % u'<br/>'.join(title)
-            if creator:
-                def processAuthor(author):
-                    aut = author[author.find(':')+1:]
-                    pos = len(aut)
-                    parenthesis = 0
-                    while pos != 0:
-                        pos -= 1
-                        if aut[pos] == ')':
-                            parenthesis += 1
-                        elif aut[pos] == '(':
-                            parenthesis -= 1
-                            if parenthesis == 0:
-                                aut = aut[:pos]
-                                break
-                    return aut.strip()
-                authors = [processAuthor(author) for author in creator]
-                contents += u'<p align="center">by<br/>%s</p>' % u',<br/>'.join(authors)
-            if publisher:
-                contents += u'<p align="center">Published by %s</p>' % u', '.join(publisher)
-            if rights:
-                contents += u'<p align="center">%s</p>' % u', '.join(rights)
-            if date:
-                contents += u'<p align="center">%s</p>' % u', '.join(date)
-            if subject:
-                contents += u'<p align="center">(%s)</p>' % u', '.join(subject)
+            #creator = self.book.get_metadata(EPub.CREATOR)
+            #subject = self.book.get_metadata(EPub.SUBJECT)
+            #publisher = self.book.get_metadata(EPub.PUBLISHER)
+            #date = self.book.get_metadata(EPub.DATE)
+            #rights = self.book.get_metadata(EPub.RIGHTS)
+
+            coverFile = BookView.findCoverImageFile(self.book.filepath)
+            contents = ''
+            if coverFile:
+                alt = 'alt="%s"' % title if title else ''
+                contents += u'<div align="center"><img src="%s" style="max-width: 400px;"/></div>' % coverFile
+            #if title:
+                #contents += u'<h1 align="center">%s</h1>' % u'<br/>'.join(title)
+            #if creator:
+                #def processAuthor(author):
+                    #aut = author[author.find(':')+1:]
+                    #pos = len(aut)
+                    #parenthesis = 0
+                    #while pos != 0:
+                        #pos -= 1
+                        #if aut[pos] == ')':
+                            #parenthesis += 1
+                        #elif aut[pos] == '(':
+                            #parenthesis -= 1
+                            #if parenthesis == 0:
+                                #aut = aut[:pos]
+                                #break
+                    #return aut.strip()
+                #authors = [processAuthor(author) for author in creator]
+                #contents += u'<p align="center">by<br/>%s</p>' % u',<br/>'.join(authors)
+            #if publisher:
+                #contents += u'<p align="center">Published by %s</p>' % u', '.join(publisher)
+            #if rights:
+                #contents += u'<p align="center">%s</p>' % u', '.join(rights)
+            #if date:
+                #contents += u'<p align="center">%s</p>' % u', '.join(date)
+            #if subject:
+                #contents += u'<p align="center">(%s)</p>' % u', '.join(subject)
             contents = u'<html><title>%s</title><body>%s</body></html>' % (u' - '.join(title), contents)
             setattr(self.book, 'coverpage', contents)
         self.loadPage(contents)
