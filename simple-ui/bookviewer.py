@@ -15,12 +15,17 @@ class BookView(QWidget):
     def __init__(self):
         QWidget.__init__(self)
         self.book = None
+        self.toc = None
+        self.current = None
 
         layout = QVBoxLayout(self)
 
         toolbar = QToolBar()
         toolbar.addAction('Open', self.openClicked)
+        toolbar.addAction('Cover', self.coverClicked)
         toolbar.addAction('ToC', self.tocClicked)
+        toolbar.addAction('Back', self.goBackClicked)
+        toolbar.addAction('Forward', self.goForwardClicked)
         toolbar.addAction('Quit', self.quitClicked)
         layout.addWidget(toolbar)
 
@@ -60,8 +65,9 @@ class BookView(QWidget):
     def loadBook(self, ebookfile):
         self.book = EPub.open(ebookfile)
         setattr(self.book, 'filepath', ebookfile)
+        self.toc = []
 
-        self.loadToC()
+        self.showCover()
 
         # Load contents
         it = self.book.get_iterator(EIterator.SPINE)
@@ -71,46 +77,79 @@ class BookView(QWidget):
         title = self.book.get_metadata(EPub.TITLE)[0]
         self.setWindowTitle(title)
 
-    def loadToC(self):
-        # Load meta data
-        title = self.book.get_metadata(EPub.TITLE)
-        creator = self.book.get_metadata(EPub.CREATOR)
-        subject = self.book.get_metadata(EPub.SUBJECT)
-        publisher = self.book.get_metadata(EPub.PUBLISHER)
-        date = self.book.get_metadata(EPub.DATE)
-        rights = self.book.get_metadata(EPub.RIGHTS)
-
-        if title:
-            contents = u'<h1>%s</h1>' % u'<br/>'.join(title)
-        if creator:
-            contents += u'<p>%s</p>' % u', '.join(creator)
-        if subject:
-            contents += u'<p>subject: %s</p>' % u', '.join(subject)
-        if publisher:
-            contents += u'<p>Published by %s</p>' % u', '.join(publisher)
-        if date:
-            contents += u'<p>%s</p>' % u', '.join(date)
-        if rights:
-            contents += u'<p>%s</p>' % u', '.join(rights)
-
-        # Load Table of Contents
-        contents += u'<h1>Table of Contents</h1>'
-
-        it = self.book.get_titerator(TIterator.NAVMAP)
-        if not it:
-            it = self.book.get_titerator(TIterator.GUIDE)
-        for item in it:
-            if item.isValid():
-                contents += u'<p><a href="%s">%s</a></p>' % (item.link(), item.label())
-        contents = u'<html><title>%s</title><body>%s</body></html>' % (u' - '.join(title), contents)
-
+    def showCover(self):
+        if hasattr(self.book, 'coverpage'):
+            contents = self.book.coverpage
+        else:
+            # Load meta data
+            title = self.book.get_metadata(EPub.TITLE)
+            creator = self.book.get_metadata(EPub.CREATOR)
+            subject = self.book.get_metadata(EPub.SUBJECT)
+            publisher = self.book.get_metadata(EPub.PUBLISHER)
+            date = self.book.get_metadata(EPub.DATE)
+            rights = self.book.get_metadata(EPub.RIGHTS)
+            if title:
+                contents = u'<h1 align="center">%s</h1>' % u'<br/>'.join(title)
+            if creator:
+                def processAuthor(author):
+                    aut = author[author.find(':')+1:]
+                    pos = len(aut)
+                    parenthesis = 0
+                    while pos != 0:
+                        pos -= 1
+                        if aut[pos] == ')':
+                            parenthesis += 1
+                        elif aut[pos] == '(':
+                            parenthesis -= 1
+                            if parenthesis == 0:
+                                aut = aut[:pos]
+                                break
+                    return aut.strip()
+                authors = [processAuthor(author) for author in creator]
+                contents += u'<p align="center">by<br/>%s</p>' % u',<br/>'.join(authors)
+            if publisher:
+                contents += u'<p align="center">Published by %s</p>' % u', '.join(publisher)
+            if rights:
+                contents += u'<p align="center">%s</p>' % u', '.join(rights)
+            if date:
+                contents += u'<p align="center">%s</p>' % u', '.join(date)
+            if subject:
+                contents += u'<p align="center">(%s)</p>' % u', '.join(subject)
+            contents = u'<html><title>%s</title><body>%s</body></html>' % (u' - '.join(title), contents)
+            setattr(self.book, 'coverpage', contents)
         self.loadPage(contents)
+        self.current_position = 'coverpage'
+
+    def showToC(self):
+        if hasattr(self.book, 'tocpage'):
+            contents = self.book.tocpage
+        else:
+            # Load Table of Contents
+            title = self.book.get_metadata(EPub.TITLE)
+            if title:
+                contents = u'<h1 align="center">%s</h1>' % u'<br/>'.join(title)
+            contents += u'<h2>Table of Contents</h2>'
+            it = self.book.get_titerator(TIterator.NAVMAP)
+            if not it:
+                it = self.book.get_titerator(TIterator.GUIDE)
+            for item in it:
+                if item.isValid():
+                    contents += u'<p><a href="%s">%s</a></p>' % (item.link(), item.label())
+                self.toc.append(item.link())
+            contents = u'<html><title>%s</title><body>%s</body></html>' % (u' - '.join(title), contents)
+            setattr(self.book, 'tocpage', contents)
+        self.loadPage(contents)
+        self.current_position = 'tocpage'
 
     def linkClicked(self, url):
         if url.path() in self.contents.keys():
+            self.current_position = url.path()
             self.loadPage(self.contents[url.path()])
         elif url.path().startswith('http://') or url.path().startswith('www.'):
             print 'pass the address to the system browser'
+
+    def coverClicked(self):
+        self.showCover()
 
     def openClicked(self):
         epubFile = QFileDialog.getOpenFileName(self, 'Open Image', '.', '*.epub')[0]
@@ -118,7 +157,28 @@ class BookView(QWidget):
             self.loadBook(str(epubFile))
 
     def tocClicked(self):
-        self.loadToC()
+        self.showToC()
+
+    def goBackClicked(self):
+        if self.current_position == 'coverpage':
+            return
+        if self.current_position == 'tocpage':
+            self.showCover()
+        elif self.toc[0] == self.current_position:
+            self.showToC()
+        elif self.current_position != 'coverpage':
+            self.current_position = self.toc[self.toc.index(self.current_position)-1]
+            self.loadPage(self.contents[self.current_position])
+
+    def goForwardClicked(self):
+        if self.current_position == 'coverpage':
+            self.showToC()
+        elif self.current_position == 'tocpage':
+            self.current_position = self.toc[0]
+            self.loadPage(self.contents[self.current_position])
+        elif self.current_position != self.toc[-1]:
+            self.current_position = self.toc[self.toc.index(self.current_position)+1]
+            self.loadPage(self.contents[self.current_position])
 
     def quitClicked(self):
         QApplication.instance().quit()
