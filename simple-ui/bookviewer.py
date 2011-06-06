@@ -159,7 +159,18 @@ class BookView(QWidget):
         self.current_position = 'tocpage'
 
     def linkClicked(self, url):
-        if url.path() in self.contents.keys():
+        fragment = None
+        if url.hasFragment():
+            fragment = url.fragment()
+            _url = QUrl(url.toString()[:url.toString().find('#%s'%fragment)])
+            if _url.toString() != 'about:blank' and _url.path() != self.current_position:
+                url = _url
+                fragment = None
+
+        if fragment:
+            page = self.view.page()
+            page.mainFrame().scrollToAnchor(fragment)
+        elif url.path() in self.contents.keys():
             self.current_position = url.path()
             self.loadPage(self.contents[url.path()])
         elif url.path().startswith('http://') or url.path().startswith('www.'):
